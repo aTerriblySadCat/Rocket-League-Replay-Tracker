@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Rocket_League_Replay_Tracker
 {
@@ -20,7 +22,7 @@ namespace Rocket_League_Replay_Tracker
                 int googleFlag = GetFlagIndex(args, new string[] { "-g", "-google" });
                 int waitTimeFlag = GetFlagIndex(args, new string[] { "-w, -wait " });
 
-                if(!FlagIsValid(args, playerFlagIndex) || !FlagIsValid(args, directoryFlag) || !FlagIsValid(args, googleFlag) || !FlagIsValid(args, waitTimeFlag))
+                if (!FlagIsValid(args, playerFlagIndex) || !FlagIsValid(args, directoryFlag) || !FlagIsValid(args, googleFlag) || !FlagIsValid(args, waitTimeFlag))
                 {
                     throw new ArgumentException("Invalid flag found!\nUse -h, -help to get information on how to use the flags.");
                 }
@@ -40,7 +42,7 @@ namespace Rocket_League_Replay_Tracker
 
                 // Get the players to track from the command line
                 List<string>? playersToTrack = null;
-                if(playerFlagIndex != -1)
+                if (playerFlagIndex != -1)
                 {
                     playersToTrack = GetPlayersToTrack(args, playerFlagIndex);
                 }
@@ -75,7 +77,7 @@ namespace Rocket_League_Replay_Tracker
                     // Remove all files so they all get updated
                     replayFileDictionary.Clear();
                 }
-                else if(updateFlag != -1)
+                else if (updateFlag != -1)
                 {
                     // Delete files that are newer than the lastReplayFileName so they get updated
                     // If the lastReplayFileName can't be found it will just ignore the -u flag
@@ -83,7 +85,7 @@ namespace Rocket_League_Replay_Tracker
                     List<string> fileNames = replayFileDictionary.Keys.ToList();
                     foreach (string fileName in fileNames)
                     {
-                        if(fileName == config.lastReplayFileName)
+                        if (fileName == config.lastReplayFileName)
                         {
                             delete = true;
                             continue;
@@ -95,7 +97,7 @@ namespace Rocket_League_Replay_Tracker
                         }
                     }
 
-                    if(!delete)
+                    if (!delete)
                     {
                         throw new ArgumentException("The replay file to check for (" + config.lastReplayFileName + ") does not exist!\nPlease use the -u, -update flag to update this value.");
                     }
@@ -111,7 +113,7 @@ namespace Rocket_League_Replay_Tracker
                 // Infinite loop so it keeps running
                 while (true)
                 {
-                    MainLoop(replayFolderPath, replayFileDictionary, playersToTrack, spreadSheetId, config);
+                    replayFileDictionary = MainLoop(replayFolderPath, replayFileDictionary, playersToTrack, spreadSheetId, config);
                     Console.WriteLine("Debug - Waiting for files...");
                     Thread.Sleep(waitTime);
                 }
@@ -180,6 +182,7 @@ namespace Rocket_League_Replay_Tracker
         /// <summary>
         /// The main loop where all files from the given replayFolderPath are gathered.
         /// If a file is not yet present in the given replayFileDictionary, the file will be analyzed and data is processed.
+        /// Returns the modified replayFileDictionary.
         /// </summary>
         /// <param name="replayFolderPath">The path to the folder containing the replays.</param>
         /// <param name="replayFileDictionary">The Dictionary containing the replay files that don't need to be analyzed.</param>
@@ -187,13 +190,34 @@ namespace Rocket_League_Replay_Tracker
         /// <param name="spreadSheetId">The ID of the Google Sheets Spreadsheet to where the data is written.</param>
         /// <param name="config">The configuration class.</param>
         /// <exception cref="ArgumentException"></exception>
-        private static void MainLoop(string replayFolderPath, Dictionary<string, DateTime> replayFileDictionary, List<string>? playersToTrack, string spreadSheetId, Config config)
+        private static Dictionary<string, DateTime> MainLoop(string replayFolderPath, Dictionary<string, DateTime> replayFileDictionary, List<string>? playersToTrack, string spreadSheetId, Config config)
         {
             foreach (string replayFileName in Directory.EnumerateFiles(replayFolderPath))
             {
                 if (replayFileName.EndsWith(".replay") && !replayFileDictionary.ContainsKey(replayFileName))
                 {
                     Console.WriteLine("Debug - New replay file found (" + replayFileName + ")");
+
+                    DateTime currentDateTime = DateTime.UtcNow;
+                    string gameId = "";
+                    using (SHA256 sha256 = SHA256.Create())
+                    {
+                        byte[] data = sha256.ComputeHash(Encoding.UTF8.GetBytes(currentDateTime.ToLongDateString() + currentDateTime.ToLongTimeString()));
+                        StringBuilder stringBuilder = new StringBuilder();
+                        for (int i = 0; i < data.Length; i++)
+                        {
+                            stringBuilder.Append(data[i].ToString("x2"));
+                        }
+                        gameId = stringBuilder.ToString();
+                    }
+
+                    // Make sure the RL - Games sheet exists, and if not create it
+                    string gamesSheet = "RL - Games";
+                    if (!GoogleSheetsManager.DoesSheetExist(spreadSheetId, gamesSheet))
+                    {
+                        GoogleSheetsManager.CreateNewSheet(spreadSheetId, gamesSheet);
+                        Console.WriteLine("Debug - Created a new sheet " + gamesSheet);
+                    }
 
                     // New replay file found
                     DateTime lastWriteTime = File.GetLastWriteTimeUtc(replayFileName);
@@ -208,22 +232,24 @@ namespace Rocket_League_Replay_Tracker
 
                     // Get all properties
                     List<Property> properties = unpacker.GetProperties();
+
+                    // Take out the PlayerStats properties
                     Property? playerStatsProperty = properties.Find(x => x.GetName() == "PlayerStats" && x.GetType() == "ArrayProperty");
                     if (playerStatsProperty == null)
                     {
-                        throw new ArgumentException("Could not find any Goals data!");
+                        throw new ArgumentException("Could not find any player stats!");
                     }
 
                     List<Property>? playerStatsProperties = playerStatsProperty.GetValue();
+                    List<PlayerStats> playersStatsToTrack = new List<PlayerStats>();
                     if (playerStatsProperties != null)
                     {
                         // Put properties in PlayerStats structs for better readability
-                        List<PlayerStats> playersStatsToTrack = new List<PlayerStats>(playerStatsProperties.Count);
                         PlayerStats playerStats = new PlayerStats();
                         for (int i = 0; i < playerStatsProperties.Count; i += 10)
                         {
                             string? playerName = playerStatsProperties[i].GetValue();
-                            if(playerName == null) 
+                            if (playerName == null)
                             {
                                 playerStats.name = "";
                             }
@@ -253,15 +279,51 @@ namespace Rocket_League_Replay_Tracker
                             // If specific players need to be tracked, get them here and ditch the others
                             playersStatsToTrack = playersStatsToTrack.FindAll(x => playersToTrack.Contains(x.name));
                         }
+                    }
+
+                    bool trackedPlayersFound = playersStatsToTrack.Count > 0 || playersToTrack == null;
+                    if (trackedPlayersFound)
+                    {
+                        Property? team0ScoreProperty = properties.Find(x => x.GetName() == "Team0Score" && x.GetType() == "IntProperty");
+                        Property? team1ScoreProperty = properties.Find(x => x.GetName() == "Team1Score" && x.GetType() == "IntProperty");
+                        Property? goalsProperty = properties.Find(x => x.GetName() == "Goals" && x.GetType() == "ArrayProperty");
+                        Property? playerNameProperty = properties.Find(x => x.GetName() == "PlayerName" && x.GetType() == "StrProperty");
+
+                        if (team0ScoreProperty != null && team1ScoreProperty != null && goalsProperty != null && playerNameProperty != null)
+                        {
+                            string? playerName = playerNameProperty.GetValue();
+                            PlayerStats primaryPlayerStats = playersStatsToTrack.Find(x => x.name == playerName);
+                            int primaryPlayerTeam = primaryPlayerStats.team;
+                            int team0Score = team0ScoreProperty.GetValue();
+                            int team1Score = team1ScoreProperty.GetValue();
+                            List<Property>? goals = goalsProperty.GetValue();
+                            if (goals != null && goals.Count > 2)
+                            {
+                                int firstGoalTeamId = goals[2].GetValue();
+
+                                bool win = (primaryPlayerTeam == 0 && team0Score > team1Score) || (primaryPlayerTeam == 1 && team1Score > team0Score);
+                                bool primaryPlayerTeamFirstGoal = primaryPlayerTeam == firstGoalTeamId;
+
+                                if (!GoogleSheetsManager.IsFirstRowTaken(spreadSheetId, gamesSheet))
+                                {
+                                    GoogleSheetsManager.InsertFirstGamesRow(spreadSheetId, gamesSheet);
+                                    Console.WriteLine("Debug - Created first row in sheet " + gamesSheet);
+                                }
+
+                                List<object> appendGames = new List<object>() { gameId, win, primaryPlayerTeamFirstGoal };
+                                GoogleSheetsManager.AppendValues(spreadSheetId, gamesSheet, appendGames);
+                                Console.WriteLine("Debug - Appended games stats for game " + gameId + " to " + gamesSheet);
+                            }
+                        }
 
                         foreach (PlayerStats updatePlayerStats in playersStatsToTrack)
                         {
                             string playerSheetName = "RL - ";
-                            if(updatePlayerStats.onlineId == 0)
+                            if (updatePlayerStats.onlineId == 0)
                             {
                                 playerSheetName += updatePlayerStats.name;
                             }
-                            else 
+                            else
                             {
                                 playerSheetName += updatePlayerStats.onlineId;
                             }
@@ -279,13 +341,15 @@ namespace Rocket_League_Replay_Tracker
                                 Console.WriteLine("Debug - Created first row in sheet " + playerSheetName);
                             }
 
-                            List<object> appendPlayerStats = new List<object>() { updatePlayerStats.name, updatePlayerStats.onlineId.ToString(), updatePlayerStats.platformName, updatePlayerStats.team, updatePlayerStats.score, updatePlayerStats.goals, updatePlayerStats.assists, updatePlayerStats.saves, updatePlayerStats.shots };
+                            List<object> appendPlayerStats = new List<object>() { updatePlayerStats.name, updatePlayerStats.onlineId.ToString(), updatePlayerStats.platformName, gameId, updatePlayerStats.team, updatePlayerStats.score, updatePlayerStats.goals, updatePlayerStats.assists, updatePlayerStats.saves, updatePlayerStats.shots };
                             GoogleSheetsManager.AppendValues(spreadSheetId, playerSheetName, appendPlayerStats);
                             Console.WriteLine("Debug - Appended player stats of player " + updatePlayerStats.name + " to " + playerSheetName);
                         }
                     }
                 }
             }
+
+            return replayFileDictionary;
         }
 
         /// <summary>

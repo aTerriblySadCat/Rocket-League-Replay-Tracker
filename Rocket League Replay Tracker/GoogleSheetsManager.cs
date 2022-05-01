@@ -166,6 +166,23 @@ namespace Rocket_League_Replay_Tracker
             throw new InvalidOperationException("Service is null! Start the service first using the CreateService() function!");
         }
 
+        public static AppendValuesResponse InsertFirstGamesRow(string spreadSheetId, string sheetName)
+        {
+            if (service != null)
+            {
+                ValueRange valueRange = new ValueRange();
+                valueRange.MajorDimension = "ROWS";
+                List<object> firstRowValues = new List<object>() { "Game ID", "Win/Loss", "First Goal" };
+                valueRange.Values = new List<IList<object>>() { firstRowValues };
+                sheetName += "!A1";
+                SpreadsheetsResource.ValuesResource.AppendRequest appendRequest = service.Spreadsheets.Values.Append(valueRange, spreadSheetId, sheetName);
+                appendRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.RAW;
+                return appendRequest.Execute();
+            }
+
+            throw new InvalidOperationException("Service is null! Start the service first using the CreateService() function!");
+        }
+
         /// <summary>
         /// Insert the first row that is expected of a PlayerStats Sheet into the Sheet with the given sheetName in the Spreadsheet with the given spreadSheetId. Will always write into the row starting at cell A1. Returns the response from Google.
         /// </summary>
@@ -179,7 +196,7 @@ namespace Rocket_League_Replay_Tracker
             {
                 ValueRange valueRange = new ValueRange();
                 valueRange.MajorDimension = "ROWS";
-                List<object> firstRowValues = new List<object>() { "Name", "Online ID", "Platform", "Team ID", "Score", "Goals", "Assists", "Saves", "Shots" };
+                List<object> firstRowValues = new List<object>() { "Name", "Online ID", "Platform", "Game ID", "Team ID", "Score", "Goals", "Assists", "Saves", "Shots" };
                 valueRange.Values = new List<IList<object>>() { firstRowValues };
                 sheetName += "!A1";
                 SpreadsheetsResource.ValuesResource.AppendRequest appendRequest = service.Spreadsheets.Values.Append(valueRange, spreadSheetId, sheetName);
