@@ -8,8 +8,17 @@ namespace Rocket_League_Replay_Tracker
 {
     internal class Keyframe
     {
+        /// <summary>
+        /// The time of the keyframe.
+        /// </summary>
         private float time;
+        /// <summary>
+        /// The frame that is the keyframe.
+        /// </summary>
         private int frame;
+        /// <summary>
+        /// The position of the keyframe.
+        /// </summary>
         private int position;
 
         public void Deserialize(BinaryReader binaryReader)

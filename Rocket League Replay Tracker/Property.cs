@@ -8,18 +8,54 @@ namespace Rocket_League_Replay_Tracker
 {
     internal class Property
     {
+        /// <summary>
+        /// The name of the property.
+        /// </summary>
         private string? name;
+        /// <summary>
+        /// The type of the property.
+        /// </summary>
         private string? type;
+        /// <summary>
+        /// The length of the property.
+        /// </summary>
         private int length;
+        /// <summary>
+        /// An unknown value.
+        /// </summary>
         private int unknown;
 
+        /// <summary>
+        /// Used by type ArrayProperty.
+        /// </summary>
         private List<Property>? valueArray;
+        /// <summary>
+        /// Used by type IntProperty.
+        /// </summary>
         private int valueInt;
+        /// <summary>
+        /// Used by types StrProperty and NameProperty.
+        /// </summary>
         private string? valueString;
+        /// <summary>
+        /// Used by type FloatProperty.
+        /// </summary>
         private float valueFloat;
+        /// <summary>
+        /// Used by type ByteProperty.
+        /// </summary>
         private string? valueBytePropertyType;
+        /// <summary>
+        /// Used by type ByteProperty.
+        /// </summary>
         private string? valueBytePropertyValue;
+        /// <summary>
+        /// Used by type BoolProperty.
+        /// </summary>
         private byte valueByte;
+        /// <summary>
+        /// Used by type QWordProperty.
+        /// </summary>
         private long valueLong;
 
         public Property(string name)
@@ -84,12 +120,12 @@ namespace Rocket_League_Replay_Tracker
             }
         }
 
-        public string GetName()
+        public string? GetName()
         {
             return name;
         }
 
-        public string GetType()
+        public new string? GetType()
         {
             return type;
         }
@@ -104,6 +140,11 @@ namespace Rocket_League_Replay_Tracker
             return unknown;
         }
 
+        /// <summary>
+        /// Gets the value the property holds.
+        /// Can be either List<Property>, int, string, float, string[2], byte, or long.
+        /// </summary>
+        /// <returns></returns>
         public dynamic? GetValue()
         {
             if (type == "ArrayProperty")
@@ -145,7 +186,7 @@ namespace Rocket_League_Replay_Tracker
             returnString += "Property Length: " + length + "\n";
             returnString += "Property Unknown: " + unknown + "\n";
 
-            if (type == "ArrayProperty")
+            if (type == "ArrayProperty" && valueArray != null)
             {
                 returnString += "\n\n";
                 foreach(Property property in valueArray)

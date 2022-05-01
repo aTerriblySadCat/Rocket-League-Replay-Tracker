@@ -8,6 +8,12 @@ namespace Rocket_League_Replay_Tracker
 {
     public static class BinaryReaderExtensions
     {
+        /// <summary>
+        /// A special string read function required for Rocket League strings.
+        /// Handles both ASCII and Unicode.
+        /// </summary>
+        /// <param name="binaryReader">The BinaryReader from where to read.</param>
+        /// <returns></returns>
         public static string ReadLongString(this BinaryReader binaryReader)
         {
             int stringLength = binaryReader.ReadInt32();

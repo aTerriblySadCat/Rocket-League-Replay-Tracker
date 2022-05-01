@@ -8,9 +8,21 @@ namespace Rocket_League_Replay_Tracker
 {
     internal class ClassNetCache
     {
+        /// <summary>
+        /// The index of the object.
+        /// </summary>
         private int objectIndex;
+        /// <summary>
+        /// The ID of the parent.
+        /// </summary>
         private int parentId;
+        /// <summary>
+        /// The current ID.
+        /// </summary>
         private int id;
+        /// <summary>
+        /// A list of properties.
+        /// </summary>
         private List<ClassNetCacheProperty>? properties;
 
         public void Deserialize(BinaryReader binaryReader)

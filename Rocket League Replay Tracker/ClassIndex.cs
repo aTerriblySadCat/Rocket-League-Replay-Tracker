@@ -8,7 +8,13 @@ namespace Rocket_League_Replay_Tracker
 {
     internal class ClassIndex
     {
+        /// <summary>
+        /// The name of the class.
+        /// </summary>
         private string? className;
+        /// <summary>
+        /// The index of the class.
+        /// </summary>
         private int index;
 
         public void Deserialize(BinaryReader binaryReader)

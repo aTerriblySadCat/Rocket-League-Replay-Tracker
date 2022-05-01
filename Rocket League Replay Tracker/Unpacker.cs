@@ -9,30 +9,92 @@ namespace Rocket_League_Replay_Tracker
     internal class Unpacker
     {
         // Header data
+        /// <summary>
+        /// The length of header, in bytes.
+        /// </summary>
         private int headerLength;
+        /// <summary>
+        /// The header's CRC.
+        /// </summary>
         private uint headerCrc;
+        /// <summary>
+        /// The version of the engine.
+        /// </summary>
         private uint engineVersion;
+        /// <summary>
+        /// The licensee version.
+        /// </summary>
         private uint licenseeVersion;
+        /// <summary>
+        /// The net version.
+        /// Only used when engineVersion >= 868 and licenseeVersion >= 18
+        /// </summary>
         private uint netVersion;
+        /// <summary>
+        /// A static string.
+        /// </summary>
         private string? taGame;
+        /// <summary>
+        /// A list of properties.
+        /// </summary>
         private List<Property>? properties;
 
         // Body data
+        /// <summary>
+        /// The length of the body, in bytes.
+        /// </summary>
         private int bodyLength;
+        /// <summary>
+        /// The body's CRC.
+        /// </summary>
         private uint bodyCrc;
+        /// <summary>
+        /// A list of level names.
+        /// </summary>
         private List<string>? levels;
+        /// <summary>
+        /// A list of keyframes.
+        /// </summary>
         private List<Keyframe>? keyframes;
+        /// <summary>
+        /// The network stream.
+        /// </summary>
         private byte[]? networkStream;
+        /// <summary>
+        /// A list of debug strings.
+        /// </summary>
         private List<DebugString>? debugStrings;
+        /// <summary>
+        /// A list of tick marks.
+        /// </summary>
         private List<TickMark>? tickMarks;
+        /// <summary>
+        /// A list of packages used.
+        /// </summary>
         private List<string>? packages;
+        /// <summary>
+        /// A list of objects used.
+        /// </summary>
         private List<string>? objects;
+        /// <summary>
+        /// Any strings that need to be used by the replay.
+        /// </summary>
         private List<string>? names;
+        /// <summary>
+        /// A list of class indices.
+        /// </summary>
         private List<ClassIndex>? classIndices;
+        /// <summary>
+        /// A list of class net caches.
+        /// </summary>
         private List<ClassNetCache>? classNetCaches;
 
-        // Extend with frame data
+        // TODO - Extend with frame data
 
+        /// <summary>
+        /// Unpacks the replay file at the given replayFilePath. Fills the class's variables with the values found in the replay file.
+        /// </summary>
+        /// <param name="replayFilePath"></param>
         public Unpacker(string replayFilePath)
         {
             using (FileStream fileStream = new FileStream(replayFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -45,13 +107,22 @@ namespace Rocket_League_Replay_Tracker
             }
         }
 
+        /// <summary>
+        /// Get the replay file's header data.
+        /// </summary>
+        /// <param name="binaryReader"></param>
         private void GetHeaderData(BinaryReader binaryReader)
         {
             headerLength = binaryReader.ReadInt32();
             headerCrc = binaryReader.ReadUInt32();
             engineVersion = binaryReader.ReadUInt32();
             licenseeVersion = binaryReader.ReadUInt32();
-            netVersion = binaryReader.ReadUInt32();
+
+            if (engineVersion >= 868 && licenseeVersion >= 18)
+            {
+                netVersion = binaryReader.ReadUInt32();
+            }
+
             taGame = binaryReader.ReadLongString();
 
             properties = new List<Property>();
@@ -64,6 +135,10 @@ namespace Rocket_League_Replay_Tracker
             }
         }
 
+        /// <summary>
+        /// Get the replay file's body data.
+        /// </summary>
+        /// <param name="binaryReader"></param>
         private void GetBodyData(BinaryReader binaryReader)
         {
             bodyLength = binaryReader.ReadInt32();
