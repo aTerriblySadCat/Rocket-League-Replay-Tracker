@@ -8,115 +8,124 @@ namespace Rocket_League_Replay_Tracker
     {
         static void Main(string[] args)
         {
-            int helpFlagIndex = GetFlagIndex(args, new string[] { "-h", "-help" });
-
-            if (helpFlagIndex != -1)
+            try
             {
-                PrintHelp();
+                int helpFlagIndex = GetFlagIndex(args, new string[] { "-h", "-help" });
+
+                if (helpFlagIndex != -1)
+                {
+                    PrintHelp();
+                }
+                else
+                {
+                    int playerFlagIndex = GetFlagIndex(args, new string[] { "-p", "-players" });
+                    int updateFlag = GetFlagIndex(args, new string[] { "-u", "-update" });
+                    int directoryFlag = GetFlagIndex(args, new string[] { "-d", "-directory" });
+                    int googleFlag = GetFlagIndex(args, new string[] { "-g", "-google" });
+                    int waitTimeFlag = GetFlagIndex(args, new string[] { "-w, -wait " });
+
+                    if (!FlagIsValid(args, playerFlagIndex) || !FlagIsValid(args, directoryFlag) || !FlagIsValid(args, googleFlag) || !FlagIsValid(args, waitTimeFlag))
+                    {
+                        throw new ArgumentException("Invalid flag found!\nUse -h, -help to get information on how to use the flags.");
+                    }
+
+                    // Setup connection with Google Sheets
+                    GoogleSheetsManager.CreateService();
+                    Console.WriteLine("Debug - Connected with Google service!");
+
+                    int waitTime = 30000;
+                    if (waitTimeFlag != -1)
+                    {
+                        if (!int.TryParse(args[waitTimeFlag + 1], out waitTime))
+                        {
+                            waitTime = 30000;
+                        }
+                    }
+
+                    // Get the players to track from the command line
+                    List<string>? playersToTrack = null;
+                    if (playerFlagIndex != -1)
+                    {
+                        playersToTrack = GetPlayersToTrack(args, playerFlagIndex);
+                    }
+
+                    // Setup the path to the replays
+                    string replayFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\My Games\\Rocket League\\TAGame\\Demos";
+                    if (directoryFlag != -1)
+                    {
+                        replayFolderPath = args[directoryFlag + 1];
+                    }
+                    if (!Directory.Exists(replayFolderPath))
+                    {
+                        throw new ArgumentException("The folder (" + replayFolderPath + ") does not exist!\nPlease choose a valid path using the -d, -directory flags.\nSee -h, -help for more info."); ;
+                    }
+
+                    // Get all the replay files from the folder
+                    Dictionary<string, DateTime> replayFileDictionary = new Dictionary<string, DateTime>();
+                    foreach (string replayFileName in Directory.EnumerateFiles(replayFolderPath))
+                    {
+                        if (replayFileName.EndsWith(".replay"))
+                        {
+                            DateTime creationTime = File.GetLastWriteTimeUtc(replayFileName);
+                            replayFileDictionary.Add(replayFileName, creationTime);
+                        }
+                    }
+                    // Order replays from earliest to latest
+                    replayFileDictionary = replayFileDictionary.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+
+                    Config config = XmlManager.GetConfig(args, replayFolderPath, replayFileDictionary, googleFlag, updateFlag, directoryFlag);
+                    if (config.lastReplayFileName == "")
+                    {
+                        // Remove all files so they all get updated
+                        replayFileDictionary.Clear();
+                    }
+                    else if (updateFlag != -1)
+                    {
+                        // Delete files that are newer than the lastReplayFileName so they get updated
+                        // If the lastReplayFileName can't be found it will just ignore the -u flag
+                        bool delete = false;
+                        List<string> fileNames = replayFileDictionary.Keys.ToList();
+                        foreach (string fileName in fileNames)
+                        {
+                            if (fileName == config.lastReplayFileName)
+                            {
+                                delete = true;
+                                continue;
+                            }
+
+                            if (delete)
+                            {
+                                replayFileDictionary.Remove(fileName);
+                            }
+                        }
+
+                        if (!delete)
+                        {
+                            throw new ArgumentException("The replay file to check for (" + config.lastReplayFileName + ") does not exist!\nPlease use the -u, -update flag to update this value.");
+                        }
+                    }
+
+                    // Check if spreadsheet exists
+                    string? spreadSheetId = config.googleSpreadSheetId;
+                    if (spreadSheetId == null || !GoogleSheetsManager.DoesSpreadSheetExist(spreadSheetId))
+                    {
+                        throw new ArgumentException("Spreadsheet with ID (" + spreadSheetId + ") does not exist!\nPlease use the -g, -google flag to update the value with a correct ID.");
+                    }
+
+                    // Infinite loop so it keeps running
+                    while (true)
+                    {
+                        replayFileDictionary = MainLoop(replayFolderPath, replayFileDictionary, playersToTrack, spreadSheetId, config);
+                        Console.WriteLine("Debug - Waiting for files...");
+                        Thread.Sleep(waitTime);
+                    }
+                }
             }
-            else
+            catch(Exception exc)
             {
-                int playerFlagIndex = GetFlagIndex(args, new string[] { "-p", "-players" });
-                int updateFlag = GetFlagIndex(args, new string[] { "-u", "-update" });
-                int directoryFlag = GetFlagIndex(args, new string[] { "-d", "-directory" });
-                int googleFlag = GetFlagIndex(args, new string[] { "-g", "-google" });
-                int waitTimeFlag = GetFlagIndex(args, new string[] { "-w, -wait " });
-
-                if (!FlagIsValid(args, playerFlagIndex) || !FlagIsValid(args, directoryFlag) || !FlagIsValid(args, googleFlag) || !FlagIsValid(args, waitTimeFlag))
-                {
-                    throw new ArgumentException("Invalid flag found!\nUse -h, -help to get information on how to use the flags.");
-                }
-
-                // Setup connection with Google Sheets
-                GoogleSheetsManager.CreateService();
-                Console.WriteLine("Debug - Connected with Google service!");
-
-                int waitTime = 30000;
-                if (waitTimeFlag != -1)
-                {
-                    if (!int.TryParse(args[waitTimeFlag + 1], out waitTime))
-                    {
-                        waitTime = 30000;
-                    }
-                }
-
-                // Get the players to track from the command line
-                List<string>? playersToTrack = null;
-                if (playerFlagIndex != -1)
-                {
-                    playersToTrack = GetPlayersToTrack(args, playerFlagIndex);
-                }
-
-                // Setup the path to the replays
-                string replayFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\My Games\\Rocket League\\TAGame\\Demos";
-                if (directoryFlag != -1)
-                {
-                    replayFolderPath = args[directoryFlag + 1];
-                }
-                if (!Directory.Exists(replayFolderPath))
-                {
-                    throw new ArgumentException("The folder (" + replayFolderPath + ") does not exist!\nPlease choose a valid path using the -d, -directory flags.\nSee -h, -help for more info."); ;
-                }
-
-                // Get all the replay files from the folder
-                Dictionary<string, DateTime> replayFileDictionary = new Dictionary<string, DateTime>();
-                foreach (string replayFileName in Directory.EnumerateFiles(replayFolderPath))
-                {
-                    if (replayFileName.EndsWith(".replay"))
-                    {
-                        DateTime creationTime = File.GetLastWriteTimeUtc(replayFileName);
-                        replayFileDictionary.Add(replayFileName, creationTime);
-                    }
-                }
-                // Order replays from earliest to latest
-                replayFileDictionary = replayFileDictionary.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
-
-                Config config = XmlManager.GetConfig(args, replayFolderPath, replayFileDictionary, googleFlag, updateFlag, directoryFlag);
-                if (config.lastReplayFileName == "")
-                {
-                    // Remove all files so they all get updated
-                    replayFileDictionary.Clear();
-                }
-                else if (updateFlag != -1)
-                {
-                    // Delete files that are newer than the lastReplayFileName so they get updated
-                    // If the lastReplayFileName can't be found it will just ignore the -u flag
-                    bool delete = false;
-                    List<string> fileNames = replayFileDictionary.Keys.ToList();
-                    foreach (string fileName in fileNames)
-                    {
-                        if (fileName == config.lastReplayFileName)
-                        {
-                            delete = true;
-                            continue;
-                        }
-
-                        if (delete)
-                        {
-                            replayFileDictionary.Remove(fileName);
-                        }
-                    }
-
-                    if (!delete)
-                    {
-                        throw new ArgumentException("The replay file to check for (" + config.lastReplayFileName + ") does not exist!\nPlease use the -u, -update flag to update this value.");
-                    }
-                }
-
-                // Check if spreadsheet exists
-                string? spreadSheetId = config.googleSpreadSheetId;
-                if (spreadSheetId == null || !GoogleSheetsManager.DoesSpreadSheetExist(spreadSheetId))
-                {
-                    throw new ArgumentException("Spreadsheet with ID (" + spreadSheetId + ") does not exist!\nPlease use the -g, -google flag to update the value with a correct ID.");
-                }
-
-                // Infinite loop so it keeps running
-                while (true)
-                {
-                    replayFileDictionary = MainLoop(replayFolderPath, replayFileDictionary, playersToTrack, spreadSheetId, config);
-                    Console.WriteLine("Debug - Waiting for files...");
-                    Thread.Sleep(waitTime);
-                }
+                Console.WriteLine();
+                Console.WriteLine("ERROR");
+                Console.WriteLine(exc.Message);
             }
         }
 
