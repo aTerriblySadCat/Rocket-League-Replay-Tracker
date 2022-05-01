@@ -39,7 +39,7 @@ namespace Rocket_League_Replay_Tracker
 
             using (FileStream fileStream = new FileStream("credentials.json", FileMode.Open, FileAccess.Read))
             {
-                string credPath = "token.json";
+                string credPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Blooper Troopers\\Rocket League Replay Tracker\\token.json";
                 Task<UserCredential> userCredentialTask = GoogleWebAuthorizationBroker.AuthorizeAsync(GoogleClientSecrets.FromStream(fileStream).Secrets, Scopes, "user", CancellationToken.None, new FileDataStore(credPath, true));
                 userCredentialTask.Wait();
                 if(!userCredentialTask.IsCompletedSuccessfully)

@@ -401,3 +401,4 @@ FodyWeavers.xsd
 FormatNotes.txt
 credentials.json
 launchSettings.json
+Setup/*

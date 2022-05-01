@@ -6,6 +6,8 @@ namespace Rocket_League_Replay_Tracker
 {
     internal class XmlManager
     {
+        private static string configFilePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Blooper Troopers\\Rocket League Replay Tracker\\config.xml";
+
         /// <summary>
         /// Either gets the config found at location {Current Directory}\\config.xml or creates a new one. Returns the Config object that was loaded in or created.
         /// </summary>
@@ -21,10 +23,10 @@ namespace Rocket_League_Replay_Tracker
         {
             Config? config = new Config();
             XmlSerializer serializer = new XmlSerializer(config.GetType());
-            if (File.Exists("config.xml"))
+            if (File.Exists(configFilePath))
             {
                 // Load existing config file
-                using (FileStream fileStream = new FileStream("config.xml", FileMode.Open, FileAccess.Read, FileShare.None))
+                using (FileStream fileStream = new FileStream(configFilePath, FileMode.Open, FileAccess.Read, FileShare.None))
                 {
                     Config? tempConfig = serializer.Deserialize(fileStream) as Config;
                     if (tempConfig != null)
@@ -81,7 +83,7 @@ namespace Rocket_League_Replay_Tracker
 
                 string newReplayDirectory = replayFolderPath;
 
-                using (FileStream fileStream = new FileStream("config.xml", FileMode.Create, FileAccess.Write, FileShare.None))
+                using (FileStream fileStream = new FileStream(configFilePath, FileMode.Create, FileAccess.Write, FileShare.None))
                 {
                     config = new Config();
                     config.googleSpreadSheetId = newSpreadSheetId;
@@ -101,7 +103,7 @@ namespace Rocket_League_Replay_Tracker
         public static void WriteConfig(Config config)
         {
             XmlSerializer serializer = new XmlSerializer(config.GetType());
-            using (FileStream fileStream = new FileStream("config.xml", FileMode.Open, FileAccess.Write, FileShare.None))
+            using (FileStream fileStream = new FileStream(configFilePath, FileMode.Open, FileAccess.Write, FileShare.None))
             {
                 serializer.Serialize(fileStream, config);
             }

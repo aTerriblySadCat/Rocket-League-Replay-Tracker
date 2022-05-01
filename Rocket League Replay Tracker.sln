@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32421.90
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rocket League Replay Tracker", "Rocket League Replay Tracker\Rocket League Replay Tracker.csproj", "{2A2057BE-3B0B-45AA-AF64-BFAECA4F7C21}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rocket League Replay Tracker", "Rocket League Replay Tracker\Rocket League Replay Tracker.csproj", "{2A2057BE-3B0B-45AA-AF64-BFAECA4F7C21}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup", "Setup\Setup.vdproj", "{F65A163F-E3AD-40F9-B95F-9811A3ED4297}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,11 +17,20 @@ Global
 		{2A2057BE-3B0B-45AA-AF64-BFAECA4F7C21}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A2057BE-3B0B-45AA-AF64-BFAECA4F7C21}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A2057BE-3B0B-45AA-AF64-BFAECA4F7C21}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F65A163F-E3AD-40F9-B95F-9811A3ED4297}.Debug|Any CPU.ActiveCfg = Debug
+		{F65A163F-E3AD-40F9-B95F-9811A3ED4297}.Release|Any CPU.ActiveCfg = Release
+		{F65A163F-E3AD-40F9-B95F-9811A3ED4297}.Release|Any CPU.Build.0 = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A28FF7C9-6AA3-4EA4-8282-C7B69EBF82E6}
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x86 = Release|x86
 	EndGlobalSection
 EndGlobal
