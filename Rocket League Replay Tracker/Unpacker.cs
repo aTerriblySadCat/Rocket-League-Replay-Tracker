@@ -1,0 +1,354 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Rocket_League_Replay_Tracker
+{
+    internal class Unpacker
+    {
+        // Header data
+        private int headerLength;
+        private uint headerCrc;
+        private uint engineVersion;
+        private uint licenseeVersion;
+        private uint netVersion;
+        private string? taGame;
+        private List<Property>? properties;
+
+        // Body data
+        private int bodyLength;
+        private uint bodyCrc;
+        private List<string>? levels;
+        private List<Keyframe>? keyframes;
+        private byte[]? networkStream;
+        private List<DebugString>? debugStrings;
+        private List<TickMark>? tickMarks;
+        private List<string>? packages;
+        private List<string>? objects;
+        private List<string>? names;
+        private List<ClassIndex>? classIndices;
+        private List<ClassNetCache>? classNetCaches;
+
+        // Extend with frame data
+
+        public Unpacker(string replayFilePath)
+        {
+            using (FileStream fileStream = new FileStream(replayFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                using (BinaryReader binaryReader = new BinaryReader(fileStream))
+                {
+                    GetHeaderData(binaryReader);
+                    GetBodyData(binaryReader);
+                }
+            }
+        }
+
+        private void GetHeaderData(BinaryReader binaryReader)
+        {
+            headerLength = binaryReader.ReadInt32();
+            headerCrc = binaryReader.ReadUInt32();
+            engineVersion = binaryReader.ReadUInt32();
+            licenseeVersion = binaryReader.ReadUInt32();
+            netVersion = binaryReader.ReadUInt32();
+            taGame = binaryReader.ReadLongString();
+
+            properties = new List<Property>();
+            string? propertyName;
+            while((propertyName = binaryReader.ReadLongString()) != "None")
+            {
+                Property property = new Property(propertyName);
+                property.Deserialize(binaryReader);
+                properties.Add(property);
+            }
+        }
+
+        private void GetBodyData(BinaryReader binaryReader)
+        {
+            bodyLength = binaryReader.ReadInt32();
+            bodyCrc = binaryReader.ReadUInt32();
+
+            int levelCount = binaryReader.ReadInt32();
+            levels = new List<string>(levelCount);
+            for(int i = 0; i < levelCount; i++)
+            {
+                levels.Add(binaryReader.ReadLongString());
+            }
+
+            int keyframesCount = binaryReader.ReadInt32();
+            keyframes = new List<Keyframe>(keyframesCount);
+            for(int i = 0; i < keyframesCount; i++)
+            {
+                Keyframe keyframe = new Keyframe();
+                keyframe.Deserialize(binaryReader);
+                keyframes.Add(keyframe);
+            }
+
+            int networkStreamLength = binaryReader.ReadInt32();
+            networkStream = binaryReader.ReadBytes(networkStreamLength);
+
+            int debugStringCount = binaryReader.ReadInt32();
+            debugStrings = new List<DebugString>(debugStringCount);
+            for(int i = 0; i < debugStringCount; i++)
+            {
+                DebugString debugString = new DebugString();
+                debugString.Deserialize(binaryReader);
+                debugStrings.Add(debugString);
+            }
+
+            int tickMarkCount = binaryReader.ReadInt32();
+            tickMarks = new List<TickMark>(tickMarkCount);
+            for(int i = 0; i < tickMarkCount; i++)
+            {
+                TickMark tickMark = new TickMark();
+                tickMark.Deserialize(binaryReader);
+                tickMarks.Add(tickMark);
+            }
+
+            int packageCount = binaryReader.ReadInt32();
+            packages = new List<string>(packageCount);
+            for(int i = 0; i < packageCount; i++)
+            {
+                packages.Add(binaryReader.ReadLongString());
+            }
+
+            int objectCount = binaryReader.ReadInt32();
+            objects = new List<string>(objectCount);
+            for(int i = 0; i < objectCount; i++)
+            {
+                objects.Add(binaryReader.ReadLongString());
+            }
+
+            int nameCount = binaryReader.ReadInt32();
+            names = new List<string>(nameCount);
+            for(int i = 0; i < nameCount; i++)
+            {
+                names.Add(binaryReader.ReadLongString());
+            }
+
+            int classIndexCount = binaryReader.ReadInt32();
+            classIndices = new List<ClassIndex>(classIndexCount);
+            for(int i = 0; i < classIndexCount; i++)
+            {
+                ClassIndex classIndex = new ClassIndex();
+                classIndex.Deserialize(binaryReader);
+                classIndices.Add(classIndex);
+            }
+
+            int classNetCacheCount = binaryReader.ReadInt32();
+            classNetCaches = new List<ClassNetCache>(classNetCacheCount);
+            for(int i = 0; i < classNetCacheCount; i++)
+            {
+                ClassNetCache classNetCache = new ClassNetCache();
+                classNetCache.Deserialize(binaryReader);
+                classNetCaches.Add(classNetCache);
+            }
+
+            // TODO
+            // Interpret the frame data here for further and more advanced analysis
+        }
+
+        public int GetHeaderLength()
+        {
+            return headerLength;
+        }
+
+        public uint GetHeaderCrc()
+        {
+            return headerCrc;
+        }
+
+        public uint GetEngineVerion()
+        {
+            return engineVersion;
+        }
+
+        public uint GetLicenseeVersion()
+        {
+            return licenseeVersion;
+        }
+
+        public uint GetNetVersion()
+        {
+            return netVersion;
+        }
+
+        public string GetTAGame()
+        {
+            return taGame;
+        }
+
+        public List<Property> GetProperties()
+        {
+            if (properties != null)
+            {
+                return new List<Property>(properties);
+            }
+
+            return new List<Property>();
+        }
+
+        public int GetBodyLength()
+        {
+            return bodyLength;
+        }
+
+        public uint GetBodyCrc()
+        {
+            return bodyCrc;
+        }
+
+        public List<string> GetLevels()
+        {
+            if(levels != null)
+            {
+                return new List<string>(levels);
+            }
+
+            return new List<string>();
+        }
+
+        public List<Keyframe> GetKeyframes()
+        {
+            if(keyframes != null)
+            {
+                return new List<Keyframe>(keyframes);
+            }
+
+            return new List<Keyframe>();
+        }
+
+        public byte[] GetNetworkStream()
+        {
+            return networkStream;
+        }
+
+        public List<DebugString> GetDebugStrings()
+        {
+            if(debugStrings != null)
+            {
+                return new List<DebugString>(debugStrings);
+            }
+
+            return new List<DebugString>();
+        }
+
+        public List<TickMark> GetTickMarks()
+        {
+            if(tickMarks != null)
+            {
+                return new List<TickMark>(tickMarks);
+            }
+
+            return new List<TickMark>();
+        }
+
+        public List<string> GetPackages()
+        {
+            if(packages != null)
+            {
+                return new List<string>(packages);
+            }
+
+            return new List<string>();
+        }
+
+        public List<string> GetObjects()
+        {
+            if(objects != null)
+            {
+                return new List<string>(objects);
+            }
+
+            return new List<string>();
+        }
+
+        public List<string> GetNames()
+        {
+            if(names != null)
+            {
+                return new List<string>(names);
+            }
+
+            return new List<string>();
+        }
+
+        public List<ClassIndex> GetClassIndices()
+        {
+            if(classIndices != null)
+            {
+                return new List<ClassIndex>(classIndices);
+            }
+
+            return new List<ClassIndex>();
+        }
+
+        public List<ClassNetCache> GetClassNetCache()
+        {
+            if(classNetCaches != null)
+            {
+                return new List<ClassNetCache>(classNetCaches);
+            }
+
+            return new List<ClassNetCache>();
+        }
+
+        public override string ToString()
+        {
+            string returnString = "Header Length: " + headerLength + "\n";
+            returnString += "Header CRC: " + headerCrc + "\n";
+            returnString += "Engine Version: " + engineVersion + "\n";
+            returnString += "Licensee Version: " + licenseeVersion + "\n";
+            returnString += "Net Version: " + netVersion + "\n";
+            returnString += "TA Game: " + taGame + "\n\n";
+
+            foreach(Property property in properties)
+            {
+                returnString += property + "\n";
+            }
+
+            returnString += "Body Length: " + bodyLength + "\n";
+            returnString += "Body CRC: " + bodyCrc + "\n";
+            foreach(string level in levels)
+            {
+                returnString += "\nLevel: " + level + "\n";
+            }
+            foreach(Keyframe keyframe in keyframes)
+            {
+                returnString += "\n" + keyframe.ToString() + "\n";
+            }
+            returnString += "\nNetwork Stream Length: " + networkStream.Length + "\n";
+            foreach(DebugString debugString in debugStrings)
+            {
+                returnString += "\n" + debugString + "\n";
+            }
+            foreach(TickMark tickMark in tickMarks)
+            {
+                returnString += "\n" + tickMark + "\n";
+            }
+            foreach(string package in packages)
+            {
+                returnString += "\nPackage: " + package + "\n";
+            }
+            foreach(string obj in objects)
+            {
+                returnString += "\nObject: " + obj + "\n";
+            }
+            foreach(string name in names)
+            {
+                returnString += "\nName: " + name + "\n";
+            }
+            foreach(ClassIndex classIndex in classIndices)
+            {
+                returnString += "\n" + classIndex + "\n";
+            }
+            foreach(ClassNetCache classNetCache in classNetCaches)
+            {
+                returnString += "\n" + classNetCache + "\n";
+            }
+
+            return returnString;
+        }
+    }
+}
