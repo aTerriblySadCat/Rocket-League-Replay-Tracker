@@ -45,9 +45,12 @@ namespace Rocket_League_Replay_Tracker
             string returnString = "Class Net Cache Object Index: " + objectIndex + "\n";
             returnString += "Class Net Cache Parent ID: " + parentId + "\n";
             returnString += "Class Net Cache ID: " + id + "\n";
-            foreach(ClassNetCacheProperty classNetCacheProperty in properties)
+            if (properties != null)
             {
-                returnString += classNetCacheProperty + "\n";
+                foreach (ClassNetCacheProperty classNetCacheProperty in properties)
+                {
+                    returnString += classNetCacheProperty + "\n";
+                }
             }
 
             return returnString;

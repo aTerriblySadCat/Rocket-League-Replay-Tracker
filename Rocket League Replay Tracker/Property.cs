@@ -165,7 +165,12 @@ namespace Rocket_League_Replay_Tracker
             }
             else if (type == "ByteProperty")
             {
-                return new string[] { valueBytePropertyType, valueBytePropertyValue };
+                if (valueBytePropertyType != null && valueBytePropertyValue != null)
+                {
+                    return new string[] { valueBytePropertyType, valueBytePropertyValue };
+                }
+
+                return null;
             }
             else if (type == "BoolProperty")
             {

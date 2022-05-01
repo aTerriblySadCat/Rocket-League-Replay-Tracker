@@ -249,7 +249,7 @@ namespace Rocket_League_Replay_Tracker
             return netVersion;
         }
 
-        public string GetTAGame()
+        public string? GetTAGame()
         {
             return taGame;
         }
@@ -294,7 +294,7 @@ namespace Rocket_League_Replay_Tracker
             return new List<Keyframe>();
         }
 
-        public byte[] GetNetworkStream()
+        public byte[]? GetNetworkStream()
         {
             return networkStream;
         }
@@ -378,49 +378,82 @@ namespace Rocket_League_Replay_Tracker
             returnString += "Net Version: " + netVersion + "\n";
             returnString += "TA Game: " + taGame + "\n\n";
 
-            foreach(Property property in properties)
+            if (properties != null)
             {
-                returnString += property + "\n";
+                foreach (Property property in properties)
+                {
+                    returnString += property + "\n";
+                }
             }
 
             returnString += "Body Length: " + bodyLength + "\n";
             returnString += "Body CRC: " + bodyCrc + "\n";
-            foreach(string level in levels)
+            if (levels != null)
             {
-                returnString += "\nLevel: " + level + "\n";
+                foreach (string level in levels)
+                {
+                    returnString += "\nLevel: " + level + "\n";
+                }
             }
-            foreach(Keyframe keyframe in keyframes)
+            if (keyframes != null)
             {
-                returnString += "\n" + keyframe.ToString() + "\n";
+                foreach (Keyframe keyframe in keyframes)
+                {
+                    returnString += "\n" + keyframe.ToString() + "\n";
+                }
             }
-            returnString += "\nNetwork Stream Length: " + networkStream.Length + "\n";
-            foreach(DebugString debugString in debugStrings)
+            if (networkStream != null)
             {
-                returnString += "\n" + debugString + "\n";
+                returnString += "\nNetwork Stream Length: " + networkStream.Length + "\n";
             }
-            foreach(TickMark tickMark in tickMarks)
+            if (debugStrings != null)
             {
-                returnString += "\n" + tickMark + "\n";
+                foreach (DebugString debugString in debugStrings)
+                {
+                    returnString += "\n" + debugString + "\n";
+                }
             }
-            foreach(string package in packages)
+            if (tickMarks != null)
             {
-                returnString += "\nPackage: " + package + "\n";
+                foreach (TickMark tickMark in tickMarks)
+                {
+                    returnString += "\n" + tickMark + "\n";
+                }
             }
-            foreach(string obj in objects)
+            if (packages != null)
             {
-                returnString += "\nObject: " + obj + "\n";
+                foreach (string package in packages)
+                {
+                    returnString += "\nPackage: " + package + "\n";
+                }
             }
-            foreach(string name in names)
+            if (objects != null)
             {
-                returnString += "\nName: " + name + "\n";
+                foreach (string obj in objects)
+                {
+                    returnString += "\nObject: " + obj + "\n";
+                }
             }
-            foreach(ClassIndex classIndex in classIndices)
+            if (names != null)
             {
-                returnString += "\n" + classIndex + "\n";
+                foreach (string name in names)
+                {
+                    returnString += "\nName: " + name + "\n";
+                }
             }
-            foreach(ClassNetCache classNetCache in classNetCaches)
+            if (classIndices != null)
             {
-                returnString += "\n" + classNetCache + "\n";
+                foreach (ClassIndex classIndex in classIndices)
+                {
+                    returnString += "\n" + classIndex + "\n";
+                }
+            }
+            if (classNetCaches != null)
+            {
+                foreach (ClassNetCache classNetCache in classNetCaches)
+                {
+                    returnString += "\n" + classNetCache + "\n";
+                }
             }
 
             return returnString;

@@ -40,7 +40,7 @@ namespace Rocket_League_Replay_Tracker
             using (FileStream fileStream = new FileStream("credentials.json", FileMode.Open, FileAccess.Read))
             {
                 string credPath = "token.json";
-                Task<UserCredential> userCredentialTask = GoogleWebAuthorizationBroker.AuthorizeAsync(GoogleClientSecrets.Load(fileStream).Secrets, Scopes, "user", CancellationToken.None, new FileDataStore(credPath, true));
+                Task<UserCredential> userCredentialTask = GoogleWebAuthorizationBroker.AuthorizeAsync(GoogleClientSecrets.FromStream(fileStream).Secrets, Scopes, "user", CancellationToken.None, new FileDataStore(credPath, true));
                 userCredentialTask.Wait();
                 if(!userCredentialTask.IsCompletedSuccessfully)
                 {

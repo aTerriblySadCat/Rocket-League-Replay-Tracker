@@ -102,8 +102,8 @@ namespace Rocket_League_Replay_Tracker
                 }
 
                 // Check if spreadsheet exists
-                string spreadSheetId = config.googleSpreadSheetId;
-                if (!GoogleSheetsManager.DoesSpreadSheetExist(spreadSheetId))
+                string? spreadSheetId = config.googleSpreadSheetId;
+                if (spreadSheetId == null || !GoogleSheetsManager.DoesSpreadSheetExist(spreadSheetId))
                 {
                     throw new ArgumentException("Spreadsheet with ID (" + spreadSheetId + ") does not exist!\nPlease use the -g, -google flag to update the value with a correct ID.");
                 }
@@ -222,9 +222,21 @@ namespace Rocket_League_Replay_Tracker
                         PlayerStats playerStats = new PlayerStats();
                         for (int i = 0; i < playerStatsProperties.Count; i += 10)
                         {
-                            playerStats.name = playerStatsProperties[i].GetValue();
-                            playerStats.platform = playerStatsProperties[i + 1].GetValue()[0];
-                            playerStats.platformName = playerStatsProperties[i + 1].GetValue()[1];
+                            string? playerName = playerStatsProperties[i].GetValue();
+                            if(playerName == null) 
+                            {
+                                playerStats.name = "";
+                            }
+                            else
+                            {
+                                playerStats.name = playerName;
+                            }
+                            string[]? byteProperty = playerStatsProperties[i + 1].GetValue();
+                            if (byteProperty != null)
+                            {
+                                playerStats.platform = byteProperty[0];
+                                playerStats.platformName = byteProperty[1];
+                            }
                             playerStats.onlineId = playerStatsProperties[i + 2].GetValue();
                             playerStats.team = playerStatsProperties[i + 3].GetValue();
                             playerStats.score = playerStatsProperties[i + 4].GetValue();
