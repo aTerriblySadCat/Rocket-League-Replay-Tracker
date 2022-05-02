@@ -172,7 +172,7 @@ namespace Rocket_League_Replay_Tracker
             {
                 ValueRange valueRange = new ValueRange();
                 valueRange.MajorDimension = "ROWS";
-                List<object> firstRowValues = new List<object>() { "Game ID", "Win/Loss", "First Goal" };
+                List<object> firstRowValues = new List<object>() { "Game ID", "Win/Loss", "First Goal", "Overtime" };
                 valueRange.Values = new List<IList<object>>() { firstRowValues };
                 sheetName += "!A1";
                 SpreadsheetsResource.ValuesResource.AppendRequest appendRequest = service.Spreadsheets.Values.Append(valueRange, spreadSheetId, sheetName);

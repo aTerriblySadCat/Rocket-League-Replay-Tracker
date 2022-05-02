@@ -22,9 +22,8 @@ namespace Rocket_League_Replay_Tracker
                     int updateFlag = GetFlagIndex(args, new string[] { "-u", "-update" });
                     int directoryFlag = GetFlagIndex(args, new string[] { "-d", "-directory" });
                     int googleFlag = GetFlagIndex(args, new string[] { "-g", "-google" });
-                    int waitTimeFlag = GetFlagIndex(args, new string[] { "-w, -wait " });
 
-                    if (!FlagIsValid(args, playerFlagIndex) || !FlagIsValid(args, directoryFlag) || !FlagIsValid(args, googleFlag) || !FlagIsValid(args, waitTimeFlag))
+                    if (!FlagIsValid(args, playerFlagIndex) || !FlagIsValid(args, directoryFlag) || !FlagIsValid(args, googleFlag))
                     {
                         throw new ArgumentException("Invalid flag found!\nUse -h, -help to get information on how to use the flags.");
                     }
@@ -33,14 +32,11 @@ namespace Rocket_League_Replay_Tracker
                     GoogleSheetsManager.CreateService();
                     Console.WriteLine("Debug - Connected with Google service!");
 
+                    // Default wait time is 30 seconds because of Google Sheets read/write quota
+                    // 60 reads and 60 writes per user per minute
+                    // Maximum reads per replay file are 18
+                    // Maximum writes per replay is 27, though this is a very extreme scenario
                     int waitTime = 30000;
-                    if (waitTimeFlag != -1)
-                    {
-                        if (!int.TryParse(args[waitTimeFlag + 1], out waitTime))
-                        {
-                            waitTime = 30000;
-                        }
-                    }
 
                     // Get the players to track from the command line
                     List<string>? playersToTrack = null;
@@ -116,7 +112,7 @@ namespace Rocket_League_Replay_Tracker
                     while (true)
                     {
                         replayFileDictionary = MainLoop(replayFolderPath, replayFileDictionary, playersToTrack, spreadSheetId, config);
-                        Console.WriteLine("Debug - Waiting for files...");
+                        Console.WriteLine("Debug - Waiting for timeout... (" + (waitTime/1000) + " seconds)");
                         Thread.Sleep(waitTime);
                     }
                 }
@@ -297,21 +293,33 @@ namespace Rocket_League_Replay_Tracker
                         Property? team1ScoreProperty = properties.Find(x => x.GetName() == "Team1Score" && x.GetType() == "IntProperty");
                         Property? goalsProperty = properties.Find(x => x.GetName() == "Goals" && x.GetType() == "ArrayProperty");
                         Property? playerNameProperty = properties.Find(x => x.GetName() == "PlayerName" && x.GetType() == "StrProperty");
+                        Property? numFramesProperty = properties.Find(x => x.GetName() == "NumFrames" && x.GetType() == "IntProperty");
 
-                        if (team0ScoreProperty != null && team1ScoreProperty != null && goalsProperty != null && playerNameProperty != null)
+                        if (goalsProperty != null && playerNameProperty != null && numFramesProperty != null)
                         {
                             string? playerName = playerNameProperty.GetValue();
                             PlayerStats primaryPlayerStats = playersStatsToTrack.Find(x => x.name == playerName);
                             int primaryPlayerTeam = primaryPlayerStats.team;
-                            int team0Score = team0ScoreProperty.GetValue();
-                            int team1Score = team1ScoreProperty.GetValue();
+                            int team0Score = 0;
+                            if (team0ScoreProperty != null)
+                            {
+                                team0Score = team0ScoreProperty.GetValue();
+                            }
+                            int team1Score = 0;
+                            if(team1ScoreProperty != null)
+                            {
+                                team1Score = team1ScoreProperty.GetValue();
+                            }
                             List<Property>? goals = goalsProperty.GetValue();
                             if (goals != null && goals.Count > 2)
                             {
+                                int numFrames = numFramesProperty.GetValue();
+                                int lastGoalFrame = goals[goals.Count - 3].GetValue();
                                 int firstGoalTeamId = goals[2].GetValue();
 
                                 bool win = (primaryPlayerTeam == 0 && team0Score > team1Score) || (primaryPlayerTeam == 1 && team1Score > team0Score);
                                 bool primaryPlayerTeamFirstGoal = primaryPlayerTeam == firstGoalTeamId;
+                                bool overtime = (numFrames - lastGoalFrame) <= 100;
 
                                 if (!GoogleSheetsManager.IsFirstRowTaken(spreadSheetId, gamesSheet))
                                 {
@@ -319,7 +327,7 @@ namespace Rocket_League_Replay_Tracker
                                     Console.WriteLine("Debug - Created first row in sheet " + gamesSheet);
                                 }
 
-                                List<object> appendGames = new List<object>() { gameId, win, primaryPlayerTeamFirstGoal };
+                                List<object> appendGames = new List<object>() { gameId, win, primaryPlayerTeamFirstGoal, overtime };
                                 GoogleSheetsManager.AppendValues(spreadSheetId, gamesSheet, appendGames);
                                 Console.WriteLine("Debug - Appended games stats for game " + gameId + " to " + gamesSheet);
                             }
@@ -355,6 +363,8 @@ namespace Rocket_League_Replay_Tracker
                             Console.WriteLine("Debug - Appended player stats of player " + updatePlayerStats.name + " to " + playerSheetName);
                         }
                     }
+
+                    break;
                 }
             }
 
@@ -397,12 +407,6 @@ namespace Rocket_League_Replay_Tracker
             Console.WriteLine("Update the stored spreadsheet ID value used to find the Google Spreadsheet.");
             Console.WriteLine("Example:");
             Console.WriteLine("RocketLeagueReplayTracker.exe -g 1nl4CmfsGxcaC5OuFVw4hn0Ig8i3Dhcr1Ui-AUANcLt9");
-            Console.WriteLine();
-            Console.WriteLine("-w, -wait");
-            Console.WriteLine("The amount of time to wait before checking for another replay file, in milliseconds. Defaults to 30000 (30 seconds).");
-            Console.WriteLine("Increasing this value could lead to performance hits.");
-            Console.WriteLine("Example:");
-            Console.WriteLine("RocketLeagueReplayTracker.exe -w 10000");
         }
     }
 }
