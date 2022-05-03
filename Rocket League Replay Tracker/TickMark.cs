@@ -6,16 +6,18 @@ using System.Threading.Tasks;
 
 namespace Rocket_League_Replay_Tracker
 {
-    internal class TickMark
+    public class TickMark
     {
         /// <summary>
         /// The type of tick mark.
         /// </summary>
-        private string? type;
+        public string? type;
         /// <summary>
         /// The frame at which the tick mark is set.
         /// </summary>
-        private int frame;
+        public int frame;
+
+        public TickMark() { }
 
         public void Deserialize(BinaryReader binaryReader)
         {

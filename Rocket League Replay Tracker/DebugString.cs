@@ -6,20 +6,22 @@ using System.Threading.Tasks;
 
 namespace Rocket_League_Replay_Tracker
 {
-    internal class DebugString
+    public class DebugString
     {
         /// <summary>
         /// The frame number at which the DebugString was written.
         /// </summary>
-        private int frameNumber;
+        public int frameNumber;
         /// <summary>
         /// The username belonging to the DebugString.
         /// </summary>
-        private string? username;
+        public string? username;
         /// <summary>
         /// The DebugString text.
         /// </summary>
-        private string? text;
+        public string? text;
+
+        public DebugString() { }
 
         public void Deserialize(BinaryReader binaryReader)
         {

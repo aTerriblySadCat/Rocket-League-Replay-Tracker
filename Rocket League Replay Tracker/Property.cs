@@ -6,58 +6,59 @@ using System.Threading.Tasks;
 
 namespace Rocket_League_Replay_Tracker
 {
-    internal class Property
+    public class Property
     {
         /// <summary>
         /// The name of the property.
         /// </summary>
-        private string? name;
+        public string? name;
         /// <summary>
         /// The type of the property.
         /// </summary>
-        private string? type;
+        public string? type;
         /// <summary>
         /// The length of the property.
         /// </summary>
-        private int length;
+        public int length;
         /// <summary>
         /// An unknown value.
         /// </summary>
-        private int unknown;
+        public int unknown;
 
         /// <summary>
         /// Used by type ArrayProperty.
         /// </summary>
-        private List<Property>? valueArray;
+        public List<Property>? valueArray;
         /// <summary>
         /// Used by type IntProperty.
         /// </summary>
-        private int valueInt;
+        public int valueInt;
         /// <summary>
         /// Used by types StrProperty and NameProperty.
         /// </summary>
-        private string? valueString;
+        public string? valueString;
         /// <summary>
         /// Used by type FloatProperty.
         /// </summary>
-        private float valueFloat;
+        public float valueFloat;
         /// <summary>
         /// Used by type ByteProperty.
         /// </summary>
-        private string? valueBytePropertyType;
+        public string? valueBytePropertyType;
         /// <summary>
         /// Used by type ByteProperty.
         /// </summary>
-        private string? valueBytePropertyValue;
+        public string? valueBytePropertyValue;
         /// <summary>
         /// Used by type BoolProperty.
         /// </summary>
-        private byte valueByte;
+        public byte valueByte;
         /// <summary>
         /// Used by type QWordProperty.
         /// </summary>
-        private long valueLong;
+        public long valueLong;
 
+        public Property() { }
         public Property(string name)
         {
             this.name = name;

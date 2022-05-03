@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Security.Cryptography;
 using System.Text;
+using System.Xml.Serialization;
 
 namespace Rocket_League_Replay_Tracker
 {
@@ -22,6 +23,7 @@ namespace Rocket_League_Replay_Tracker
                     int updateFlag = GetFlagIndex(args, new string[] { "-u", "-update" });
                     int directoryFlag = GetFlagIndex(args, new string[] { "-d", "-directory" });
                     int googleFlag = GetFlagIndex(args, new string[] { "-g", "-google" });
+                    int logFlag = GetFlagIndex(args, new string[] { "-l", "-log" });
 
                     if (!FlagIsValid(args, playerFlagIndex) || !FlagIsValid(args, directoryFlag) || !FlagIsValid(args, googleFlag))
                     {
@@ -111,8 +113,8 @@ namespace Rocket_League_Replay_Tracker
                     // Infinite loop so it keeps running
                     while (true)
                     {
-                        replayFileDictionary = MainLoop(replayFolderPath, replayFileDictionary, playersToTrack, spreadSheetId, config);
-                        Console.WriteLine("Debug - Waiting for timeout... (" + (waitTime/1000) + " seconds)");
+                        replayFileDictionary = MainLoop(replayFolderPath, replayFileDictionary, playersToTrack, spreadSheetId, config, logFlag);
+                        Console.WriteLine("Debug - Waiting for timeout...");
                         Thread.Sleep(waitTime);
                     }
                 }
@@ -195,7 +197,7 @@ namespace Rocket_League_Replay_Tracker
         /// <param name="spreadSheetId">The ID of the Google Sheets Spreadsheet to where the data is written.</param>
         /// <param name="config">The configuration class.</param>
         /// <exception cref="ArgumentException"></exception>
-        private static Dictionary<string, DateTime> MainLoop(string replayFolderPath, Dictionary<string, DateTime> replayFileDictionary, List<string>? playersToTrack, string spreadSheetId, Config config)
+        private static Dictionary<string, DateTime> MainLoop(string replayFolderPath, Dictionary<string, DateTime> replayFileDictionary, List<string>? playersToTrack, string spreadSheetId, Config config, int logFlag)
         {
             foreach (string replayFileName in Directory.EnumerateFiles(replayFolderPath))
             {
@@ -234,6 +236,22 @@ namespace Rocket_League_Replay_Tracker
 
                     // Analyze File
                     Unpacker unpacker = new Unpacker(replayFileName);
+
+                    if(logFlag != -1)
+                    {
+                        string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Blooper Troopers\\Rocket League Replay Tracker\\Logs\\";
+                        if(!Directory.Exists(folderPath))
+                        {
+                            Directory.CreateDirectory(folderPath);
+                        }
+
+                        string logFileName = gameId;
+                        using (FileStream fileStream = new FileStream(folderPath + gameId, FileMode.Create, FileAccess.Write, FileShare.None))
+                        {
+                            XmlSerializer serializer = new XmlSerializer(unpacker.GetType());
+                            serializer.Serialize(fileStream, unpacker);
+                        }
+                    }
 
                     // Get all properties
                     List<Property> properties = unpacker.GetProperties();
@@ -407,6 +425,11 @@ namespace Rocket_League_Replay_Tracker
             Console.WriteLine("Update the stored spreadsheet ID value used to find the Google Spreadsheet.");
             Console.WriteLine("Example:");
             Console.WriteLine("RocketLeagueReplayTracker.exe -g 1nl4CmfsGxcaC5OuFVw4hn0Ig8i3Dhcr1Ui-AUANcLt9");
+            Console.WriteLine();
+            Console.WriteLine("-l, -log");
+            Console.WriteLine("Logs all data found in the replay file to a log file in the Application Data folder (%AppData%/Blooper Troopers/Rocket League Replay Tracker/Logs");
+            Console.WriteLine("Example:");
+            Console.WriteLine("RocketLeagueReplayTracker.exe -l");
         }
     }
 }

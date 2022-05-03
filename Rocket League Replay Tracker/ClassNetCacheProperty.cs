@@ -6,16 +6,18 @@ using System.Threading.Tasks;
 
 namespace Rocket_League_Replay_Tracker
 {
-    internal class ClassNetCacheProperty
+    public class ClassNetCacheProperty
     {
         /// <summary>
         /// The index of the property.
         /// </summary>
-        private int index;
+        public int index;
         /// <summary>
         /// The ID of the property.
         /// </summary>
-        private int id;
+        public int id;
+
+        public ClassNetCacheProperty() { }
 
         public void Deserialize(BinaryReader binaryReader)
         {

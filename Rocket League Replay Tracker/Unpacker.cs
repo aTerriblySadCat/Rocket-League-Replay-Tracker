@@ -6,56 +6,56 @@ using System.Threading.Tasks;
 
 namespace Rocket_League_Replay_Tracker
 {
-    internal class Unpacker
+    public class Unpacker
     {
         // Header data
         /// <summary>
         /// The length of header, in bytes.
         /// </summary>
-        private int headerLength;
+        public int headerLength;
         /// <summary>
         /// The header's CRC.
         /// </summary>
-        private uint headerCrc;
+        public uint headerCrc;
         /// <summary>
         /// The version of the engine.
         /// </summary>
-        private uint engineVersion;
+        public uint engineVersion;
         /// <summary>
         /// The licensee version.
         /// </summary>
-        private uint licenseeVersion;
+        public uint licenseeVersion;
         /// <summary>
         /// The net version.
         /// Only used when engineVersion >= 868 and licenseeVersion >= 18
         /// </summary>
-        private uint netVersion;
+        public uint netVersion;
         /// <summary>
         /// A static string.
         /// </summary>
-        private string? taGame;
+        public string? taGame;
         /// <summary>
         /// A list of properties.
         /// </summary>
-        private List<Property>? properties;
+        public List<Property>? properties;
 
         // Body data
         /// <summary>
         /// The length of the body, in bytes.
         /// </summary>
-        private int bodyLength;
+        public int bodyLength;
         /// <summary>
         /// The body's CRC.
         /// </summary>
-        private uint bodyCrc;
+        public uint bodyCrc;
         /// <summary>
         /// A list of level names.
         /// </summary>
-        private List<string>? levels;
+        public List<string>? levels;
         /// <summary>
         /// A list of keyframes.
         /// </summary>
-        private List<Keyframe>? keyframes;
+        public List<Keyframe>? keyframes;
         /// <summary>
         /// The network stream.
         /// </summary>
@@ -63,34 +63,35 @@ namespace Rocket_League_Replay_Tracker
         /// <summary>
         /// A list of debug strings.
         /// </summary>
-        private List<DebugString>? debugStrings;
+        public List<DebugString>? debugStrings;
         /// <summary>
         /// A list of tick marks.
         /// </summary>
-        private List<TickMark>? tickMarks;
+        public List<TickMark>? tickMarks;
         /// <summary>
         /// A list of packages used.
         /// </summary>
-        private List<string>? packages;
+        public List<string>? packages;
         /// <summary>
         /// A list of objects used.
         /// </summary>
-        private List<string>? objects;
+        public List<string>? objects;
         /// <summary>
         /// Any strings that need to be used by the replay.
         /// </summary>
-        private List<string>? names;
+        public List<string>? names;
         /// <summary>
         /// A list of class indices.
         /// </summary>
-        private List<ClassIndex>? classIndices;
+        public List<ClassIndex>? classIndices;
         /// <summary>
         /// A list of class net caches.
         /// </summary>
-        private List<ClassNetCache>? classNetCaches;
+        public List<ClassNetCache>? classNetCaches;
 
         // TODO - Extend with frame data
 
+        public Unpacker() { }
         /// <summary>
         /// Unpacks the replay file at the given replayFilePath. Fills the class's variables with the values found in the replay file.
         /// </summary>

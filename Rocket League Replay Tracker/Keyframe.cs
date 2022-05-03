@@ -6,20 +6,22 @@ using System.Threading.Tasks;
 
 namespace Rocket_League_Replay_Tracker
 {
-    internal class Keyframe
+    public class Keyframe
     {
         /// <summary>
         /// The time of the keyframe.
         /// </summary>
-        private float time;
+        public float time;
         /// <summary>
         /// The frame that is the keyframe.
         /// </summary>
-        private int frame;
+        public int frame;
         /// <summary>
         /// The position of the keyframe.
         /// </summary>
-        private int position;
+        public int position;
+
+        public Keyframe() { }
 
         public void Deserialize(BinaryReader binaryReader)
         {

@@ -6,16 +6,18 @@ using System.Threading.Tasks;
 
 namespace Rocket_League_Replay_Tracker
 {
-    internal class ClassIndex
+    public class ClassIndex
     {
         /// <summary>
         /// The name of the class.
         /// </summary>
-        private string? className;
+        public string? className;
         /// <summary>
         /// The index of the class.
         /// </summary>
-        private int index;
+        public int index;
+
+        public ClassIndex() { }
 
         public void Deserialize(BinaryReader binaryReader)
         {
