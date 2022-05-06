@@ -332,16 +332,12 @@ namespace Rocket_League_Replay_Tracker
                             if (goals != null && goals.Count > 2)
                             {
                                 int numFrames = numFramesProperty.GetValue();
-                                int totalGoals = goals.Count / 3;
                                 int lastGoalFrame = goals[goals.Count - 3].GetValue();
                                 int firstGoalTeamId = goals[2].GetValue();
 
                                 bool win = (primaryPlayerTeam == 0 && team0Score > team1Score) || (primaryPlayerTeam == 1 && team1Score > team0Score);
                                 bool primaryPlayerTeamFirstGoal = primaryPlayerTeam == firstGoalTeamId;
-
-                                // Average of 350 frames per goal
-                                // Lowest recorded 1 goal game win frame count (9450 - 350)
-                                bool overtime = (numFrames - totalGoals * 350) < 9100;
+                                bool overtime = (numFrames - lastGoalFrame) < 100 && Math.Abs(team0Score - team1Score) == 1;
 
                                 if (!GoogleSheetsManager.IsFirstRowTaken(spreadSheetId, gamesSheet))
                                 {
