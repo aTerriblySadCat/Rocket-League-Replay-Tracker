@@ -37,17 +37,22 @@ namespace Rocket_League_Replay_Tracker
 
             UserCredential userCredential;
 
+            string tokenPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Blooper Troopers\\Rocket League Replay Tracker\\token.json";
+            if(File.Exists(tokenPath))
+            {
+                File.Delete(tokenPath);
+            }
+
             using (FileStream fileStream = new FileStream("credentials.json", FileMode.Open, FileAccess.Read))
             {
-                string credPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Blooper Troopers\\Rocket League Replay Tracker\\token.json";
-                Task<UserCredential> userCredentialTask = GoogleWebAuthorizationBroker.AuthorizeAsync(GoogleClientSecrets.FromStream(fileStream).Secrets, Scopes, "user", CancellationToken.None, new FileDataStore(credPath, true));
+                Task<UserCredential> userCredentialTask = GoogleWebAuthorizationBroker.AuthorizeAsync(GoogleClientSecrets.FromStream(fileStream).Secrets, Scopes, "user", CancellationToken.None, new FileDataStore(tokenPath, true));
                 userCredentialTask.Wait();
                 if(!userCredentialTask.IsCompletedSuccessfully)
                 {
                     throw new InvalidOperationException("Could not verify access to Google account!");
                 }
                 userCredential = userCredentialTask.Result;
-                Console.WriteLine("Credentials saved to: " + credPath);
+                Console.WriteLine("Credentials saved to: " + tokenPath);
             }
 
             service = new SheetsService(new BaseClientService.Initializer()
